@@ -4,10 +4,21 @@ from src.utils.model import create_model, save_model, save_plot
 from src.utils.callbacks import get_callbacks
 import argparse
 import os
+import logging
+
+
 
 def training(config_path):
     config = read_config(config_path)
+
+    logging_str = "[%(asctime)s: %(levelname)s: %(module)s] %(message)s"
+    LOG_DIR = config["logs"]['general_logs']
+    log = config["logs"]["logs_dir"]
+    GENERAL_LOGS_SAVE = os.path.join(log,LOG_DIR)
+    os.makedirs(GENERAL_LOGS_SAVE, exist_ok=True)
+    logging.basicConfig(filename= os.path.join(GENERAL_LOGS_SAVE,"running_logs.log"),level=logging.INFO, format=logging_str, filemode="a")
     
+
     validation_datasize = config["params"]["validation_datasize"]
     (X_train, y_train), (X_valid, y_valid), (X_test, y_test) = get_data(validation_datasize)
 
@@ -48,5 +59,12 @@ if __name__ == '__main__':
     args.add_argument("--config", "-c", default="config.yaml")
 
     parsed_args = args.parse_args()
+    try:
+        logging.info(">>>>> starting training >>>>>")
+        training(config_path=parsed_args.config)
+        logging.info("<<<<< training done successfully<<<<<\n")
+    except Exception as e:
+        logging.exception(e)
+        raise e
 
-    training(config_path=parsed_args.config)
+    
